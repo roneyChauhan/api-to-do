@@ -1,8 +1,13 @@
-const mongoose = require("mongoose");
+const {mongoose, Schema} = require("mongoose");
 
 const taskSchema = new mongoose.Schema({
+  user: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+  },
   title: String,
   description: String,
+  dueDate:Date,
   priority : {
     type: String,
     enum:['low','medium','high'],
