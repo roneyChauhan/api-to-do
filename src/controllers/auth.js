@@ -40,7 +40,6 @@ module.exports.registerUser = async(req, res) => {
             throwError(409, 'BAD_REQUEST', 'invalid user input');
         }
         const oldUser = await Users.findOne({ email });
-        console.log("oldUser", oldUser);
         if (oldUser) {
             throwError(409, 'DUPLICATE_USER', 'User Already Exist. Please Login');
         }

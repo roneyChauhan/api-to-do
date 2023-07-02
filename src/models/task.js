@@ -23,7 +23,19 @@ const taskSchema = new mongoose.Schema({
     enum:['active','deleted'],
     default: "active",
   },
-});
+  deletedAt:Date,
+},{ timestamps: true });
+taskSchema.index(
+	{
+		title: 1,
+		priority: 1,
+    taskStatus:1,
+    dueDate:1,
+	},
+	{
+		name: 'main',
+	},
+);
 const Task = mongoose.model("task", taskSchema);
 
 module.exports = Task;
