@@ -5,13 +5,30 @@ const { throwError, successRes } = require('../helpers/response');
 
 module.exports.loginUser = async(req, res) => {
     try {
-        const data = req.body;
-		const sessionID = req.sessionID;
-		const session = req.session;
-
-        console.log('data',data,sessionID,'sessionID', 'session', session);
-
-        return {session : session};
+        const { email, password } = req.body;
+        if (!(email && password)) {
+            throwError(409, 'BAD_REQUEST', 'invalid user input');
+        }
+        const user = await Users.findOne({ email });
+        if (user) {
+            if (await bcrypt.compare(password, user.password)) {
+                const token = jwt.sign(
+                    { user_id: user._id, email },
+                    process.env.TOKEN_KEY,
+                    {
+                      expiresIn: "2h",
+                    }
+                );
+                user.token = token;
+                await user.save();  
+                const result = {user : user, token : token};
+                return successRes(200, result);
+            } else {
+                throwError(409, 'INVALID_CREDINTIAL', 'credential not match');
+            }
+        } else {
+            throwError(409, 'USER_NOT_FOUND', 'user not found');
+        }
     } catch (error) {
         throw error;
     }
@@ -19,12 +36,13 @@ module.exports.loginUser = async(req, res) => {
 module.exports.registerUser = async(req, res) => {
     try {
         const {name, email, password} = req.body;
-        // Validate if user exist in our database
+        if (!(name && email && password)) {
+            throwError(409, 'BAD_REQUEST', 'invalid user input');
+        }
         const oldUser = await Users.findOne({ email });
         console.log("oldUser", oldUser);
         if (oldUser) {
             throwError(409, 'DUPLICATE_USER', 'User Already Exist. Please Login');
-            // res.status(409).send("");
         }
         let encryptedPassword = await bcrypt.hash(password, 10);
         let user = await Users.create({
@@ -41,7 +59,8 @@ module.exports.registerUser = async(req, res) => {
         );
         user.token = token;
         await user.save();
-        return successRes(200, user);
+        const result = {user : user, token : token};
+        return successRes(200, result);
     } catch (error) {
         console.log('error',error);
         throw error;
